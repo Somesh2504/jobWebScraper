@@ -12,7 +12,7 @@
 # Secrets required (set in repo Settings → Secrets → Actions):
 #   TELEGRAM_BOT_TOKEN   — Telegram bot token from @BotFather
 #   TELEGRAM_CHAT_ID     — your Telegram user/group chat ID
-#   CLAUDE_API_KEY       — Anthropic API key (for future AI matching)
+#   GEMINI_API_KEY       — Google Gemini API key (for AI summaries)
 ################################################################################
 
 name: Scheduled Scrape + Digest
@@ -41,7 +41,7 @@ concurrency:
 env:
   TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
   TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
-  CLAUDE_API_KEY:     ${{ secrets.CLAUDE_API_KEY }}
+  GEMINI_API_KEY:     ${{ secrets.GEMINI_API_KEY }}
   DIGEST:             'true'
 
 jobs:

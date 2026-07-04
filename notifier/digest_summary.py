@@ -7,7 +7,8 @@ import logging
 import re
 from typing import List, Dict
 
-import anthropic
+from google import genai
+from google.genai import types
 
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -34,8 +35,8 @@ def generate_fit_summaries(jobs: List[JobRecord]) -> Dict[str, str]:
     """
     summaries = {}
     
-    if not config.CLAUDE_API_KEY:
-        logger.warning("CLAUDE_API_KEY not set. Using fallback summaries.")
+    if not config.GEMINI_API_KEY:
+        logger.warning("GEMINI_API_KEY not set. Using fallback summaries.")
         for job in jobs:
             summaries[job.apply_link] = _get_fallback_summary(job)
         return summaries
@@ -60,29 +61,21 @@ Respond with ONLY a valid JSON object where keys are the Job IDs provided and va
         desc_snippet = job.description[:500] if job.description else "No description available."
         prompt += f"Job ID: {i}\nTitle: {job.title}\nCompany: {job.company}\nSnippet: {desc_snippet}\n\n"
 
-    client = anthropic.Anthropic(api_key=config.CLAUDE_API_KEY)
+    client = genai.Client(api_key=config.GEMINI_API_KEY)
     
     try:
-        response = client.messages.create(
-            model="claude-3-5-sonnet-20240620",
-            max_tokens=500,
-            temperature=0.3,
-            system="You output raw valid JSON only.",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.3,
+            ),
         )
         
-        content = response.content[0].text.strip()
-        # Clean up in case Claude adds markdown blocks
-        if content.startswith("```json"):
-            content = content[7:]
-        if content.startswith("```"):
-            content = content[3:]
-        if content.endswith("```"):
-            content = content[:-3]
+        content = response.text.strip()
             
-        parsed = json.loads(content.strip())
+        parsed = json.loads(content)
         
         # Map back to apply links
         for i, job in enumerate(jobs_to_process):
@@ -95,7 +88,7 @@ Respond with ONLY a valid JSON object where keys are the Job IDs provided and va
         logger.info("Successfully generated AI summaries for %d jobs.", len(parsed))
                 
     except Exception as e:
-        logger.error("Claude API failed to generate summaries: %s. Using fallbacks.", e)
+        logger.error("Gemini API failed to generate summaries: %s. Using fallbacks.", e)
         for job in jobs_to_process:
             summaries[job.apply_link] = _get_fallback_summary(job)
             

@@ -20,7 +20,7 @@ DB_PATH = BASE_DIR / "jobs.db"
 # ──────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "")
-CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "")
+GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
 # ──────────────────────────────────────────────
 # My Skills (used for matching)
