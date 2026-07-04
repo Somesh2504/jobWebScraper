@@ -1,0 +1,159 @@
+# ─────────────────────────────────────────────────────────────
+# companies_config.yaml
+# Maps company name → ATS platform + board token/slug.
+#
+# Supported platforms:  greenhouse | lever | smartrecruiters
+#
+# To find a company's token:
+#   Greenhouse  → visit  https://boards.greenhouse.io/{token}
+#   Lever       → visit  https://jobs.lever.co/{slug}
+#   SmartRecr.  → visit  https://jobs.smartrecruiters.com/{id}
+# ─────────────────────────────────────────────────────────────
+
+companies:
+
+  # ──── Tier-1 GCC / MNC Companies ────
+
+  - name: Google
+    ats: greenhouse
+    token: google
+
+  - name: Microsoft
+    ats: greenhouse
+    token: microsoft
+
+  - name: Amazon
+    ats: greenhouse
+    token: amazon
+
+  - name: Meta
+    ats: greenhouse
+    token: meta
+
+  - name: Apple
+    ats: greenhouse
+    token: apple
+
+  - name: Netflix
+    ats: lever
+    token: netflix
+
+  - name: Stripe
+    ats: greenhouse
+    token: stripe
+
+  - name: Shopify
+    ats: lever
+    token: shopify
+
+  - name: Coinbase
+    ats: greenhouse
+    token: coinbase
+
+  - name: Uber
+    ats: greenhouse
+    token: uber
+
+  - name: Airbnb
+    ats: greenhouse
+    token: airbnb
+
+  - name: Spotify
+    ats: lever
+    token: spotify
+
+  - name: Twilio
+    ats: greenhouse
+    token: twilio
+
+  - name: Figma
+    ats: greenhouse
+    token: figma
+
+  - name: Notion
+    ats: greenhouse
+    token: notion
+
+  - name: Cloudflare
+    ats: greenhouse
+    token: cloudflare
+
+  - name: Datadog
+    ats: greenhouse
+    token: datadog
+
+  - name: Atlassian
+    ats: greenhouse
+    token: atlassian
+
+  - name: GitLab
+    ats: greenhouse
+    token: gitlab
+
+  - name: HashiCorp
+    ats: greenhouse
+    token: hashicorp
+
+  # ──── Indian IT / GCC in India ────
+
+  - name: Razorpay
+    ats: lever
+    token: razorpay
+
+  - name: CRED
+    ats: lever
+    token: cred
+
+  - name: Postman
+    ats: greenhouse
+    token: postman
+
+  - name: Zerodha
+    ats: lever
+    token: zerodha
+
+  - name: PhonePe
+    ats: lever
+    token: phonepe
+
+  - name: Swiggy
+    ats: lever
+    token: swiggy
+
+  - name: Meesho
+    ats: lever
+    token: meesho
+
+  - name: Groww
+    ats: lever
+    token: groww
+
+  - name: Flipkart
+    ats: greenhouse
+    token: flipkart
+
+  # ──── SmartRecruiters Companies ────
+
+  - name: Bosch
+    ats: smartrecruiters
+    token: BoschGroup
+
+  - name: Visa
+    ats: smartrecruiters
+    token: Visa
+
+  - name: SAP
+    ats: smartrecruiters
+    token: SAP
+
+  - name: Siemens
+    ats: smartrecruiters
+    token: Siemens
+
+  # ─────────────────────────────────────
+  # Add more companies below.
+  # Format:
+  #   - name: CompanyName
+  #     ats: greenhouse | lever | smartrecruiters
+  #     token: their-board-slug-or-id
+  # ─────────────────────────────────────

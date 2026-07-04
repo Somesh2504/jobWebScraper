@@ -1,0 +1,108 @@
+################################################################################
+# .github/workflows/scheduled-scrape.yml
+#
+# Runs the full pipeline (scrape → score → digest) at four IST time slots:
+#   08:00 IST  =  02:30 UTC
+#   12:30 IST  =  07:00 UTC
+#   16:30 IST  =  11:00 UTC
+#   20:30 IST  =  15:00 UTC
+#
+# LinkedIn is only included in the 08:00 IST (morning) run to reduce ban risk.
+#
+# Secrets required (set in repo Settings → Secrets → Actions):
+#   TELEGRAM_BOT_TOKEN   — Telegram bot token from @BotFather
+#   TELEGRAM_CHAT_ID     — your Telegram user/group chat ID
+#   CLAUDE_API_KEY       — Anthropic API key (for future AI matching)
+################################################################################
+
+name: Scheduled Scrape + Digest
+
+on:
+  schedule:
+    - cron: '30 2 * * *'    # 08:00 IST  (morning — includes LinkedIn)
+    - cron: '0 7 * * *'     # 12:30 IST
+    - cron: '0 11 * * *'    # 16:30 IST
+    - cron: '0 15 * * *'    # 20:30 IST
+
+  workflow_dispatch:
+    inputs:
+      include_linkedin:
+        description: 'Include LinkedIn scraper (high-risk)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: job-search-pipeline
+  cancel-in-progress: false
+
+env:
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+  CLAUDE_API_KEY:     ${{ secrets.CLAUDE_API_KEY }}
+  DIGEST:             'true'
+
+jobs:
+  scrape-and-digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── Checkout with token so we can push the DB back ──
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Python + dependency cache ──
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+
+      # ── Run the full pipeline ──
+      - name: Run pipeline (digest mode)
+        run: |
+          # Morning run (02:30 UTC = 08:00 IST) → include LinkedIn
+          # All other runs → skip LinkedIn
+          INCLUDE_LINKEDIN=""
+          if [[ "${{ github.event.schedule }}" == "30 2 * * *" ]]; then
+            INCLUDE_LINKEDIN="--include-linkedin"
+            echo "Morning run: including LinkedIn scraper"
+          fi
+
+          # Manual trigger override
+          if [[ "${{ github.event.inputs.include_linkedin }}" == "true" ]]; then
+            INCLUDE_LINKEDIN="--include-linkedin"
+          fi
+
+          python main.py --digest $INCLUDE_LINKEDIN
+
+      # ── Persist the SQLite database ──
+      #
+      # PERSISTENCE NOTE:
+      # Committing the SQLite .db file back to the repo is the simplest
+      # approach for a personal project.  It avoids external infra (no
+      # Supabase/Postgres instance to manage, no connection strings, no
+      # billing).  The file is small (<5 MB for thousands of jobs) and
+      # grows slowly, so git history bloat is negligible.
+      #
+      # If you later want a cloud DB instead, swap storage.py to use
+      # Supabase's REST API — the interface (insert_job_if_new, etc.)
+      # stays identical.  But for a solo GitHub Actions project,
+      # committing the .db is the cleaner choice.
+      #
+      - name: Commit updated database
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add jobs.db
+          git diff --cached --quiet && echo "No DB changes to commit" && exit 0
+          git commit -m "chore(db): update jobs database [skip ci]"
+          git push

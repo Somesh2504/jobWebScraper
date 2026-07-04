@@ -1,0 +1,101 @@
+1. Personal Details & Profiles
+Full Name: Somesh Chevula (also recorded as Chevula Somesh)
+Date of Birth: April 25, 2004 (Age: 22)
+Location: Hyderabad, Telangana, India (Open to relocation/travel)
+Email: someshchevula25@gmail.com
+Phone: +91-9347679388
+Profiles:
+LinkedIn: 
+GitHub: 
+linkedin.com/in/somesh2504
+github.com/Somesh2504
+LeetCode: 
+leetcode.com/chevulasomesh
+Interests & Lifestyle:
+Fitness: Active in structural strength/weightlifting and endurance running (tracks 
+21.1km half-marathon distances on Strava).
+Sports: Avid cricket follower, tracking player stats (like Bhuvneshwar Kumar, Travis 
+Head) and team schedules.
+2. Education
+Bachelor of Engineering (B.E.) in Computer Science and Engineering
+Institution: Matrusri Engineering College, Hyderabad
+Timeline: October 2022 – Expected June 2026
+Current CGPA: 8.38
+Intermediate (MPC)
+Institution: TSRJC (BOYS), Sarvail, Telangana
+Timeline: 2020 – 2022
+Score: 978/1000 (97.8%)
+3. Technical Skills
+Programming Languages: JavaScript (ES6+), TypeScript, Python, Java, SQL, PLpgSQL, 
+HTML5, CSS3.
+Frontend Technologies: React.js (v19), Tailwind CSS, Vite, Framer Motion, Socket.IO 
+Client, HTML/XHTML, DOM Manipulation, AJAX.
+Backend & Databases: Node.js, Express.js (v5), MongoDB (Mongoose), PostgreSQL, 
+Supabase, Redis.
+Machine Learning & AI: PyTorch, HuggingFace, CNNs (ResNet, DenseNet, EfficientNet), 
+XGBoost, Random Forest, SVM, OpenCV, Grad-CAM (Explainable AI).
+Core CS Fundamentals: Operating Systems (OS), Computer Networks (CN), Database 
+Management Systems (DBMS), System Design, Data Structures & Algorithms (DSA).
+Tools & Architecture: Git, GitHub, Postman, Razorpay API, JWT, Nodemailer, RESTful APIs, 
+WebSockets, WebRTC, MVC Architecture, PM2, Google Colab.
+4. Professional Experience
+Software Engineer Intern (Frontend & Backend) | Student Tribe (SkyCRM)
+Timeline: June 2025 – October 2025
+Architected a 4-tier Customer Relationship Management (CRM) application with role
+based access for Admins, Managers, Team Leaders, and Representatives.
+Developed a system for managers to upload bulk leads, dynamically assign them to 
+teams, and track statuses (Interested, Pending, Success, Follow-up).
+Improved dashboard performance using Redis caching to quickly render complex 
+visualizations (bar graphs, pie charts) showing team performance and lead-source ROI.
+Collaborated in a 5-member Agile team to design scalable database schemas and 
+intuitive frontend interfaces.
+5. Full-Stack Web Development Projects
+Qrave / ServeQ (Smart Restaurant Ordering & Queue Management)
+Tech Stack: React 19, Vite, Tailwind CSS, Node.js, Express, Supabase (PostgreSQL), 
+Razorpay, JWT.
+Details: Built a unified checkout system supporting both UPI (Razorpay with Route 
+transfers/GST calculation) and Cash payments.
+Key Features:
+Implemented atomic token generation using PostgreSQL RPC and row-level locking 
+(FOR UPDATE) to prevent duplicate order numbers under high concurrency.
+Developed a real-time Kitchen Display System (KDS) and public order tracking page 
+using WebSockets.
+Created dynamic menu management (soft deletes, availability toggles) and 
+comprehensive admin analytics dashboards for revenue and peak-hour heatmaps.
+AlumNet (College Networking Architecture)
+Tech Stack: React 19, Node.js, Express, MongoDB, Socket.IO, WebRTC (PeerJS).
+Details: A networking platform connecting Students, Alumni, and Colleges with multi-role 
+JWT/OTP authentication.
+Key Features:
+Architected a real-time polymorphic chat and community group messaging system 
+with compound database indexing for rapid queries.
+Integrated in-browser peer-to-peer audio and video calling using WebRTC and custom 
+socket signaling.
+Built full CRUD dashboards for colleges and admins, including an automated 
+testimonial moderation system.
+6. Machine Learning & Deep Learning Projects
+Skin Cancer Diagnostics Architecture (Major College Project)
+Tech Stack: Python, PyTorch, CNN Ensembles, XGBoost, Grad-CAM.
+Details: A multi-feature fusion framework using the ISIC 2019/HAM10000 datasets to 
+classify skin lesions into 8 diagnostic classes.
+Key Features:
+Combined deep semantic features (from DenseNet, ResNet, EfficientNet) with clinical 
+handcrafted features (ABCD rules, GLCM texture metrics).
+Achieved 90.18% overall accuracy and a 94.73% Macro AUC using a soft-voting 
+ensemble (XGBoost, Random Forest, SVM).
+Applied a "safety-first" bias to heavily minimize false negatives for malignant classes, 
+and integrated Grad-CAM heatmaps for Explainable AI (XAI) transparency.
+AudioClone (End-to-End Neural Voice Cloning Pipeline)
+Tech Stack: Python, PyTorch, Whisper, Demucs, Coqui XTTS v2, Google Colab.
+Details: Cloned specific vocal styles (including that of S. P. Balasubrahmanyam) from raw 
+audio files.
+Key Features:
+Built a robust data pipeline to convert MP3s to an LJSpeech-style dataset using 
+Demucs for noise reduction and Silero VAD for audio slicing.
+Fine-tuned a Coqui XTTS v2 GPT-backbone model, dynamically tuning 
+hyperparameters to fit GPU constraints.
+Created an interactive ipywidgets UI for real-time text-to-speech generation with 
+adjustable synthesis parameters like speed and temperature.
+7. Achievements & Additional Milestones
+Algorithmic Problem Solving: Mastered 450+ complex Data Structures and Algorithms 
+(DSA) problems on LeetCode using Java ,participated in various hackthon

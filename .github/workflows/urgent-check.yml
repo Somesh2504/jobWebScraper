@@ -1,0 +1,70 @@
+################################################################################
+# .github/workflows/urgent-check.yml
+#
+# Runs every 2 hours to re-check already-stored (un-alerted) jobs for
+# urgency signals.  Does NOT scrape — only reads the database and sends
+# urgent alerts for any jobs whose deadlines have entered the 3-day window
+# since the last run.
+#
+# This catches:
+#   • Jobs that were stored earlier but didn't have urgency signals yet
+#     (e.g. the company added "last date to apply: <date>" after posting)
+#   • Jobs approaching their deadline that weren't urgent at scrape time
+#
+# Secrets required (same as scheduled-scrape.yml):
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_CHAT_ID
+################################################################################
+
+name: Urgent Job Re-check
+
+on:
+  schedule:
+    # Every 2 hours, offset by 45 min to avoid collision with scrape runs
+    - cron: '45 0,2,4,6,8,10,12,14,16,18,20,22 * * *'
+
+  workflow_dispatch: {}
+
+concurrency:
+  group: job-search-pipeline
+  cancel-in-progress: false
+
+env:
+  TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+  TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+  DIGEST:             'false'
+
+jobs:
+  urgent-recheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # No Playwright needed — urgency check doesn't scrape
+
+      - name: Run urgency re-check
+        run: python main.py --urgent-only
+
+      # Commit in case mark_alerted changed the DB
+      - name: Commit updated database
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add jobs.db
+          git diff --cached --quiet && echo "No DB changes to commit" && exit 0
+          git commit -m "chore(db): mark urgent-alerted jobs [skip ci]"
+          git push
