@@ -18,6 +18,9 @@
 
 name: Urgent Job Re-check
 
+permissions:
+  contents: write
+
 on:
   schedule:
     # Every 2 hours, offset by 45 min to avoid collision with scrape runs
