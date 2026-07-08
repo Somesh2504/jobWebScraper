@@ -171,10 +171,11 @@ def process_digest() -> None:
     digest_candidates.sort(key=lambda j: getattr(j, '_score', 0), reverse=True)
     digest_top = digest_candidates[:10]
 
+    digest_success = True
     if digest_top:
         slot_label = _determine_slot_label()
         logger.info("Sending digest '%s' with %d jobs.", slot_label, len(digest_top))
-        send_digest(digest_top, slot_label=slot_label)
+        digest_success = send_digest(digest_top, slot_label=slot_label)
     else:
         logger.info("No jobs above threshold for digest.")
 
@@ -182,6 +183,9 @@ def process_digest() -> None:
     for job in jobs:
         h = get_job_hash(job)
         if h not in alerted_hashes:
+            # If sending digest failed, don't mark the top jobs as alerted so we retry next time
+            if job in digest_top and not digest_success:
+                continue
             mark_alerted(h)
 
     stats_after = get_stats()
