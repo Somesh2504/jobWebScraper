@@ -104,16 +104,15 @@ ENTRY_LEVEL_KEYWORDS: list[str] = [
     "junior",
     "fresher",
     "fresh graduate",
-    "graduate",
-    "trainee",
-    "associate",
+    "new grad",
+    "university graduate",
+    "class of 2026",
     "intern",
     "internship",
+    "trainee",
+    "graduate engineer trainee",
     "0-1 year",
-    "0-2 year",
     "0 to 1",
-    "0 to 2",
-    "new grad",
     "campus",
     "early career",
 ]
@@ -176,20 +175,46 @@ BLOCKED_LOCATIONS: list[str] = [
     "new york", "san francisco", "seattle", "austin",
     "boston", "chicago", "los angeles", "denver",
     "toronto", "vancouver", "montreal",
-    "remote, us", "remote - us", "remote - usa",
+    "remote, us", "remote - us", "remote - usa", "remote - us only",
     "remote - canada", "remote - uk", "remote, canada",
     "remote - brazil", "remote - france", "remote - germany",
-    "remote - estonia", "remote, emea",
+    "remote - estonia", "remote, emea", "north america",
 ]
 
 # ──────────────────────────────────────────────
-# Blocked title keywords (reject senior/lead roles)
+# Global Denylist (ruthless filtering for senior/non-coding)
 # ──────────────────────────────────────────────
-BLOCKED_TITLE_KEYWORDS: list[str] = [
-    "senior", "staff", "principal", "director",
-    "head of", "vp ", "vice president", "chief",
-    "architect", "distinguished",
-    "10+", "8+", "7+", "6+", "5+",
+GLOBAL_DENYLIST: list[str] = [
+    # IT Support & Customer Operations
+    "support", "helpdesk", "service desk", "l1", "l2", "customer success",
+    "customer care", "billing", "ticketing", "zendesk", "call center",
+    "bpo", "technical operations",
+    # Corporate & Administrative Tracks
+    "hr", "human resources", "talent", "recruiter", "admin",
+    "administrative assistant", "office coordinator", "executive assistant",
+    "sales", "marketing", "business development",
+    # Experience & Management Level
+    "senior", "lead", "staff", "principal", "manager", "architect",
+    "director", "head of", "vp ", "vice president", "chief", "distinguished",
+    "3+ years", "5+ years", "8+ years", "10+", "8+", "7+", "6+", "5+",
+]
+
+# ──────────────────────────────────────────────
+# Target Degrees & Mandated Tech Stack
+# ──────────────────────────────────────────────
+ALLOWED_DEGREES: list[str] = [
+    "b.e.", "b.tech", "computer science", "computer engineering", "cs", "cse"
+]
+
+DISALLOWED_DEGREES_STRICT: list[str] = [
+    "mechanical", "civil", "electrical", "chemical", "m.e.", "m.tech", "ms", "mba"
+]
+
+MANDATE_TECH_STACK: list[str] = [
+    "python", "java", "c++", "javascript", "typescript", "sql",
+    "node.js", "express", "postgresql", "mongodb", "rest api", "microservices",
+    "pytorch", "generative ai", "llm", "machine learning", "data structures",
+    "algorithms", "react.js", "html", "css"
 ]
 
 # ──────────────────────────────────────────────

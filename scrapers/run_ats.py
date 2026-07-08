@@ -69,7 +69,7 @@ def _is_blocked_location(job: JobRecord) -> bool:
 def _is_blocked_title(job: JobRecord) -> bool:
     """Return True if the job title indicates a senior/lead role."""
     title = job.title.lower().strip()
-    blocked = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
+    blocked = getattr(config, "GLOBAL_DENYLIST", [])
     for bt in blocked:
         if bt in title:
             return True

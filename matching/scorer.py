@@ -83,44 +83,93 @@ def _get_resume_embedding() -> Optional[np.ndarray]:
 
 
 # ───────────────────────────────────────────────────────
-# HARD BLOCK — reject foreign/senior jobs immediately
+# HARD BLOCK — STRICT FILTER PROTOCOL
 # ───────────────────────────────────────────────────────
 def _is_blocked(job: JobRecord) -> bool:
     """Return True if the job should be hard-blocked (score=0).
 
-    Checks:
-      1. Location matches any BLOCKED_LOCATIONS keyword.
-      2. Title matches any BLOCKED_TITLE_KEYWORDS keyword.
-      3. Location contains "remote" but NOT "india" (catches "Remote - US" etc.).
+    Strict Filter Chain:
+      1. Geographic Bounds
+      2. Global Denylist
+      3. Target Job Titles
+      4. Experience Level
+      5. Academic Degrees
+      6. Tech Stack
     """
     loc = job.location.lower().strip()
     title = job.title.lower().strip()
+    desc = job.description.lower().strip()
+    text = f"{title} {desc}"
 
-    # Check blocked locations
+    # 1. Geographic Bounds
     blocked_locs = getattr(config, "BLOCKED_LOCATIONS", [])
     for bl in blocked_locs:
         if bl in loc:
             logger.debug("BLOCKED (location '%s' matches '%s'): %s", loc, bl, job.title)
             return True
 
-    # Check blocked title keywords
-    blocked_titles = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
-    for bt in blocked_titles:
-        if bt in title:
-            logger.debug("BLOCKED (title '%s' matches '%s'): %s", title, bt, job.title)
-            return True
-
-    # Catch generic "Remote" that is NOT India-specific
     if "remote" in loc and "india" not in loc:
-        # Check if any Indian city is mentioned
         has_india_marker = False
-        for target in config.TARGET_LOCATIONS:
+        for target in getattr(config, "TARGET_LOCATIONS", []):
             if target in loc:
                 has_india_marker = True
                 break
         if not has_india_marker:
             logger.debug("BLOCKED (remote non-India '%s'): %s", loc, job.title)
             return True
+
+    # 2. Global Denylist
+    global_denylist = getattr(config, "GLOBAL_DENYLIST", [])
+    for deny in global_denylist:
+        pattern = r'\b' + re.escape(deny) + r'\b'
+        if re.search(pattern, title) or re.search(pattern, desc):
+            logger.debug("BLOCKED (Global Denylist matched '%s'): %s", deny, job.title)
+            return True
+
+    # 3. Target Job Titles
+    title_core = ["software", "backend", "full stack", "machine learning", "data", "ai", "sde"]
+    title_suffix = ["engineer", "developer", "scientist", "analyst", "intern", "trainee"]
+    has_core = any(c in title for c in title_core)
+    has_suffix = any(s in title for s in title_suffix)
+    if not (has_core and has_suffix) and "sde" not in title:
+        logger.debug("BLOCKED (Target Job Title miss): %s", job.title)
+        return True
+
+    # 4. Experience & Year of Grad (Mandatory 0-1)
+    exp_valid = False
+    for kw in getattr(config, "ENTRY_LEVEL_KEYWORDS", []):
+        if kw in text:
+            exp_valid = True
+            break
+    if not exp_valid:
+        logger.debug("BLOCKED (Experience level miss): %s", job.title)
+        return True
+
+    # 5. Academic Degrees
+    disallowed_degrees = getattr(config, "DISALLOWED_DEGREES_STRICT", [])
+    for deg in disallowed_degrees:
+        pattern = r'\b' + re.escape(deg) + r'\b'
+        if re.search(pattern, text):
+            # Allow Master's if it also asks for Bachelor's
+            if deg in ["m.e.", "m.tech", "ms", "mba"]:
+                if "bachelor" in text or "b.e." in text or "b.tech" in text:
+                    continue
+            logger.debug("BLOCKED (Degree matched '%s'): %s", deg, job.title)
+            return True
+
+    # 6. Tech Stack (Requires >= 2)
+    tech_stack = getattr(config, "MANDATE_TECH_STACK", [])
+    matched_tech = 0
+    for tech in tech_stack:
+        pattern = r'(?:^|[\s,;/|(\[])' + re.escape(tech) + r'(?:[\s,;/|)\].]|$)'
+        if re.search(pattern, text):
+            matched_tech += 1
+            if matched_tech >= 2:
+                break
+    
+    if matched_tech < 2:
+        logger.debug("BLOCKED (Tech stack < 2 matched): %s", job.title)
+        return True
 
     return False
 

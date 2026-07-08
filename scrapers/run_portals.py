@@ -9,8 +9,10 @@ import random
 import time
 from typing import List
 
-import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+import sys
+from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 import config
 from storage import storage
 from models import JobRecord
@@ -45,7 +47,7 @@ def _is_blocked_location(job: JobRecord) -> bool:
 def _is_blocked_title(job: JobRecord) -> bool:
     """Return True if the job title indicates a senior/lead role."""
     title = job.title.lower().strip()
-    blocked = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
+    blocked = getattr(config, "GLOBAL_DENYLIST", [])
     for bt in blocked:
         if bt in title:
             return True
