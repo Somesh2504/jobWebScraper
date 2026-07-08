@@ -49,6 +49,33 @@ RATE_LIMIT_DELAY = 0.5  # seconds between API calls
 # Filtering helpers
 # ─────────────────────────────────────────────
 
+def _is_blocked_location(job: JobRecord) -> bool:
+    """Return True if the job is from a blocked foreign location."""
+    loc = job.location.lower().strip()
+    if not loc:
+        return False
+    blocked = getattr(config, "BLOCKED_LOCATIONS", [])
+    for bl in blocked:
+        if bl in loc:
+            return True
+    # Catch generic 'remote' without India context
+    if "remote" in loc and "india" not in loc:
+        has_india = any(t in loc for t in config.TARGET_LOCATIONS)
+        if not has_india:
+            return True
+    return False
+
+
+def _is_blocked_title(job: JobRecord) -> bool:
+    """Return True if the job title indicates a senior/lead role."""
+    title = job.title.lower().strip()
+    blocked = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
+    for bt in blocked:
+        if bt in title:
+            return True
+    return False
+
+
 def _matches_india_location(job: JobRecord) -> bool:
     """Return True if the job location matches any target location."""
     loc = job.location.lower().strip()
@@ -125,22 +152,22 @@ def run() -> dict:
             raw_jobs: List[JobRecord] = fetch_fn(token, company_name=name)
             logger.info("  ↳ Raw jobs fetched: %d", len(raw_jobs))
 
-            # Filter: India-based / remote locations
-            india_jobs = [j for j in raw_jobs if _matches_india_location(j)]
-            logger.info("  ↳ After location filter (India/Remote): %d", len(india_jobs))
+            # Filter 1: reject blocked foreign locations and senior titles
+            safe_jobs = [j for j in raw_jobs if not _is_blocked_location(j) and not _is_blocked_title(j)]
+            logger.info("  ↳ After blocklist filter: %d", len(safe_jobs))
 
-            # Filter: entry-level titles
+            # Filter 2: India-based / remote locations
+            india_jobs = [j for j in safe_jobs if _matches_india_location(j)]
+            logger.info("  ↳ After location filter (India): %d", len(india_jobs))
+
+            # Filter 3: entry-level titles (strict — no fallback)
             entry_level_jobs = [j for j in india_jobs if _matches_entry_level(j)]
             logger.info("  ↳ After entry-level filter: %d", len(entry_level_jobs))
 
-            # If entry-level filter is too aggressive, keep all India jobs
-            # but tag them differently. For now we insert the entry-level subset.
-            jobs_to_insert = entry_level_jobs if entry_level_jobs else india_jobs
-            filter_note = "entry-level" if entry_level_jobs else "all-india (no entry-level match)"
-
+            # Only insert entry-level jobs — no fallback to all-India
             new_count = 0
             dup_count = 0
-            for job in jobs_to_insert:
+            for job in entry_level_jobs:
                 is_new = insert_job_if_new(job)
                 if is_new:
                     new_count += 1
@@ -148,13 +175,14 @@ def run() -> dict:
                     dup_count += 1
 
             logger.info(
-                "  ↳ Inserted: %d new, %d duplicates  [filter: %s]",
-                new_count, dup_count, filter_note,
+                "  ↳ Inserted: %d new, %d duplicates  [filter: entry-level only]",
+                new_count, dup_count,
             )
 
             summary[name] = {
                 "status": "ok",
                 "raw": len(raw_jobs),
+                "blocked": len(raw_jobs) - len(safe_jobs),
                 "india": len(india_jobs),
                 "entry_level": len(entry_level_jobs),
                 "new": new_count,

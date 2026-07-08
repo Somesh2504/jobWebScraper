@@ -138,18 +138,58 @@ URGENCY_KEYWORDS: list[str] = [
 ]
 
 # ──────────────────────────────────────────────
-# Target locations
+# Target locations (Indian cities + remote-india)
 # ──────────────────────────────────────────────
 TARGET_LOCATIONS: list[str] = [
     "hyderabad",
-    "remote",
+    "bangalore",
+    "bengaluru",
+    "mumbai",
+    "pune",
+    "chennai",
+    "delhi",
+    "ncr",
+    "noida",
+    "gurgaon",
+    "gurugram",
+    "kolkata",
+    "ahmedabad",
+    "jaipur",
+    "kochi",
+    "thiruvananthapuram",
     "pan-india",
     "pan india",
     "work from home",
     "wfh",
-    "anywhere",
     "india",
     "telangana",
+]
+
+# ──────────────────────────────────────────────
+# Blocked locations (reject jobs from these places)
+# ──────────────────────────────────────────────
+BLOCKED_LOCATIONS: list[str] = [
+    "usa", "us-remote", "us remote", "united states",
+    "canada", "uk", "london", "europe", "germany", "france",
+    "brazil", "singapore", "australia", "japan", "ireland",
+    "netherlands", "sweden", "spain", "italy", "poland",
+    "new york", "san francisco", "seattle", "austin",
+    "boston", "chicago", "los angeles", "denver",
+    "toronto", "vancouver", "montreal",
+    "remote, us", "remote - us", "remote - usa",
+    "remote - canada", "remote - uk", "remote, canada",
+    "remote - brazil", "remote - france", "remote - germany",
+    "remote - estonia", "remote, emea",
+]
+
+# ──────────────────────────────────────────────
+# Blocked title keywords (reject senior/lead roles)
+# ──────────────────────────────────────────────
+BLOCKED_TITLE_KEYWORDS: list[str] = [
+    "senior", "staff", "principal", "director",
+    "head of", "vp ", "vice president", "chief",
+    "architect", "distinguished",
+    "10+", "8+", "7+", "6+", "5+",
 ]
 
 # ──────────────────────────────────────────────
@@ -167,20 +207,26 @@ USER_AGENT: str = (
 # ──────────────────────────────────────────────
 # Matching thresholds
 # ──────────────────────────────────────────────
-MIN_MATCH_SCORE: float = 0.3      # minimum score (0-1) to keep a job
+MIN_MATCH_SCORE: float = 0.20      # minimum score (0-1) to keep a job
 SKILL_WEIGHT: float = 0.50        # weight for skill-match component
 LEVEL_WEIGHT: float = 0.30        # weight for entry-level keyword match
 LOCATION_WEIGHT: float = 0.20     # weight for location match
 
 # ──────────────────────────────────────────────
 # Resume text (for semantic similarity scoring)
-# Paste your full resume text here as a single string.
-# The scorer embeds this once and compares against each JD.
+# Loaded from SOMESH.txt — the scorer embeds this
+# once and compares against each JD.
 # ──────────────────────────────────────────────
 RESUME_TEXT: str = """
 Somesh Chevula — Software Engineer | Full Stack Developer | ML Engineer
-B.E. Computer Science, Matrusri Engineering College, Hyderabad (CGPA: 8.38, Expected June 2026)
+B.E. Computer Science and Engineering, Matrusri Engineering College, Hyderabad
+CGPA: 8.38 | Expected June 2026
 Location: Hyderabad, Telangana, India. Open to relocation and remote.
+Email: someshchevula25@gmail.com | Phone: +91-9347679388
+
+EDUCATION:
+B.E. Computer Science and Engineering — Matrusri Engineering College, Hyderabad (Oct 2022 – June 2026), CGPA: 8.38
+Intermediate (MPC) — TSRJC (BOYS), Sarvail, Telangana (2020 – 2022), Score: 978/1000 (97.8%)
 
 TECHNICAL SKILLS:
 Programming Languages: JavaScript (ES6+), TypeScript, Python, Java, SQL, PLpgSQL, HTML5, CSS3.
@@ -188,7 +234,7 @@ Frontend: React.js (v19), Tailwind CSS, Vite, Framer Motion, Socket.IO Client, D
 Backend & Databases: Node.js, Express.js (v5), MongoDB (Mongoose), PostgreSQL, Supabase, Redis.
 ML & AI: PyTorch, HuggingFace, CNNs (ResNet, DenseNet, EfficientNet), XGBoost, Random Forest, SVM, OpenCV, Grad-CAM.
 Core CS: Operating Systems, Computer Networks, DBMS, System Design, Data Structures & Algorithms (DSA).
-Tools: Git, GitHub, Postman, Razorpay API, JWT, Nodemailer, RESTful APIs, WebSockets, WebRTC, MVC, PM2.
+Tools: Git, GitHub, Postman, Razorpay API, JWT, Nodemailer, RESTful APIs, WebSockets, WebRTC, MVC Architecture, PM2, Google Colab.
 
 EXPERIENCE:
 Software Engineer Intern (Frontend & Backend) at Student Tribe (SkyCRM), June 2025 – October 2025.
@@ -198,7 +244,7 @@ Software Engineer Intern (Frontend & Backend) at Student Tribe (SkyCRM), June 20
 - Collaborated in 5-member Agile team designing scalable schemas and frontend interfaces.
 
 PROJECTS:
-Qrave/ServeQ — Smart Restaurant Ordering & Queue Management (React 19, Vite, Tailwind, Node.js, Express, Supabase, Razorpay, JWT).
+Qrave/ServeQ — Smart Restaurant Ordering & Queue Management (React 19, Vite, Tailwind CSS, Node.js, Express, Supabase/PostgreSQL, Razorpay, JWT).
 - Built unified checkout with UPI (Razorpay Route transfers/GST) and Cash payments.
 - Atomic token generation using PostgreSQL RPC and row-level locking (FOR UPDATE).
 - Real-time Kitchen Display System and public order tracking via WebSockets.
@@ -214,8 +260,8 @@ Skin Cancer Diagnostics — ML Major Project (Python, PyTorch, CNN Ensembles, XG
 - 90.18% accuracy, 94.73% Macro AUC using soft-voting ensemble (XGBoost, RF, SVM).
 - Safety-first bias minimizing false negatives for malignant classes, Grad-CAM for XAI.
 
-AudioClone — Neural Voice Cloning Pipeline (Python, PyTorch, Whisper, Demucs, Coqui XTTS v2).
-- Data pipeline: MP3 → LJSpeech-style dataset using Demucs + Silero VAD.
+AudioClone — Neural Voice Cloning Pipeline (Python, PyTorch, Whisper, Demucs, Coqui XTTS v2, Google Colab).
+- Data pipeline: MP3 to LJSpeech-style dataset using Demucs + Silero VAD.
 - Fine-tuned Coqui XTTS v2 GPT-backbone with dynamic hyperparameter tuning.
 - Interactive ipywidgets UI for real-time TTS generation.
 

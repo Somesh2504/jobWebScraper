@@ -24,6 +24,51 @@ logger = logging.getLogger(__name__)
 
 PORTALS_PACKAGE = "scrapers.portals"
 
+# ─────────────────────────────────────────────
+# Filtering helpers
+# ─────────────────────────────────────────────
+def _is_blocked_location(job: JobRecord) -> bool:
+    """Return True if the job is from a blocked foreign location."""
+    loc = job.location.lower().strip()
+    if not loc:
+        return False
+    blocked = getattr(config, "BLOCKED_LOCATIONS", [])
+    for bl in blocked:
+        if bl in loc:
+            return True
+    if "remote" in loc and "india" not in loc:
+        has_india = any(t in loc for t in config.TARGET_LOCATIONS)
+        if not has_india:
+            return True
+    return False
+
+def _is_blocked_title(job: JobRecord) -> bool:
+    """Return True if the job title indicates a senior/lead role."""
+    title = job.title.lower().strip()
+    blocked = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
+    for bt in blocked:
+        if bt in title:
+            return True
+    return False
+
+def _matches_india_location(job: JobRecord) -> bool:
+    """Return True if the job location matches any target location."""
+    loc = job.location.lower().strip()
+    if not loc:
+        return False
+    for target in config.TARGET_LOCATIONS:
+        if target in loc:
+            return True
+    return False
+
+def _matches_entry_level(job: JobRecord) -> bool:
+    """Return True if the job title or description hints at entry-level."""
+    text = f"{job.title} {job.description}".lower()
+    for kw in config.ENTRY_LEVEL_KEYWORDS:
+        if kw in text:
+            return True
+    return False
+
 def run_all(reduced_frequency: bool = False):
     """
     Run all portal scrapers.
@@ -69,11 +114,21 @@ def run_all(reduced_frequency: bool = False):
                 logger.info(">> Portal %s searching: %s in %s", module_name, kws, loc)
                 
                 try:
-                    jobs: List[JobRecord] = mod.fetch_jobs(kws, location=loc)
-                    scraped_total += len(jobs)
+                    raw_jobs: List[JobRecord] = mod.fetch_jobs(kws, location=loc)
+                    scraped_total += len(raw_jobs)
+                    
+                    # Filter: reject blocked locations & titles
+                    safe_jobs = [j for j in raw_jobs if not _is_blocked_location(j) and not _is_blocked_title(j)]
+                    # Filter: must be India
+                    india_jobs = [j for j in safe_jobs if _matches_india_location(j)]
+                    # Filter: must be entry-level
+                    entry_jobs = [j for j in india_jobs if _matches_entry_level(j)]
+
+                    logger.info("  ↳ Portal filter: %d raw -> %d safe -> %d india -> %d entry-level", 
+                                len(raw_jobs), len(safe_jobs), len(india_jobs), len(entry_jobs))
                     
                     # Insert into DB
-                    for job in jobs:
+                    for job in entry_jobs:
                         if storage.insert_job_if_new(job):
                             new_inserted += 1
                             

@@ -7,6 +7,9 @@ Scores each JobRecord on a 0-100 scale across four dimensions:
     3. Semantic similarity     (25 pts) — cosine sim via sentence-transformers
     4. Location fit            (10 pts)
 
+Hard-blocks jobs from foreign locations or with senior-level titles
+(returns score=0 so they never pass the threshold).
+
 Uses the local all-MiniLM-L6-v2 model (free, ~80 MB, runs on CPU).
 The resume embedding is computed once and cached for the session.
 """
@@ -80,6 +83,49 @@ def _get_resume_embedding() -> Optional[np.ndarray]:
 
 
 # ───────────────────────────────────────────────────────
+# HARD BLOCK — reject foreign/senior jobs immediately
+# ───────────────────────────────────────────────────────
+def _is_blocked(job: JobRecord) -> bool:
+    """Return True if the job should be hard-blocked (score=0).
+
+    Checks:
+      1. Location matches any BLOCKED_LOCATIONS keyword.
+      2. Title matches any BLOCKED_TITLE_KEYWORDS keyword.
+      3. Location contains "remote" but NOT "india" (catches "Remote - US" etc.).
+    """
+    loc = job.location.lower().strip()
+    title = job.title.lower().strip()
+
+    # Check blocked locations
+    blocked_locs = getattr(config, "BLOCKED_LOCATIONS", [])
+    for bl in blocked_locs:
+        if bl in loc:
+            logger.debug("BLOCKED (location '%s' matches '%s'): %s", loc, bl, job.title)
+            return True
+
+    # Check blocked title keywords
+    blocked_titles = getattr(config, "BLOCKED_TITLE_KEYWORDS", [])
+    for bt in blocked_titles:
+        if bt in title:
+            logger.debug("BLOCKED (title '%s' matches '%s'): %s", title, bt, job.title)
+            return True
+
+    # Catch generic "Remote" that is NOT India-specific
+    if "remote" in loc and "india" not in loc:
+        # Check if any Indian city is mentioned
+        has_india_marker = False
+        for target in config.TARGET_LOCATIONS:
+            if target in loc:
+                has_india_marker = True
+                break
+        if not has_india_marker:
+            logger.debug("BLOCKED (remote non-India '%s'): %s", loc, job.title)
+            return True
+
+    return False
+
+
+# ───────────────────────────────────────────────────────
 # 1. SKILL KEYWORD OVERLAP  (0 → W_SKILL)
 # ───────────────────────────────────────────────────────
 def _score_skills(job: JobRecord) -> float:
@@ -131,7 +177,7 @@ _POSITIVE_PATTERNS = [
 
 # Negative signals → penalize (requires senior experience)
 _NEGATIVE_PATTERNS = [
-    r'\b[5-9]\+?\s*(?:year|yr)s?\b',
+    r'\b[3-9]\+?\s*(?:year|yr)s?\b',
     r'\b(?:1[0-9]|20)\+?\s*(?:year|yr)s?\b',
     r'\bsenior\b',
     r'\bstaff\s+engineer\b',
@@ -149,7 +195,7 @@ def _score_entry_level(job: JobRecord) -> float:
     Scoring logic:
         - Start at 50% (neutral)
         - Each positive signal adds +10% (capped at 100%)
-        - Each negative signal subtracts 15% (floored at 0%)
+        - Each negative signal subtracts 20% (floored at 0%)
     """
     text = f"{job.title} {job.description}".lower()
     if not text.strip():
@@ -163,7 +209,7 @@ def _score_entry_level(job: JobRecord) -> float:
 
     for pat in _NEGATIVE_PATTERNS:
         if re.search(pat, text):
-            score_pct -= 0.15
+            score_pct -= 0.20  # stronger penalty for senior signals
 
     score_pct = max(0.0, min(1.0, score_pct))
     return score_pct * W_ENTRY
@@ -210,8 +256,8 @@ def _score_location(job: JobRecord) -> float:
     """
     loc = job.location.lower().strip()
     if not loc:
-        # Empty location: assume PAN India or not specified → partial credit
-        return W_LOCATION * 0.5
+        # Empty location: no credit (we can't confirm it's India)
+        return 0.0
 
     for target in config.TARGET_LOCATIONS:
         if target in loc:
@@ -227,12 +273,19 @@ def score_job(job: JobRecord) -> float:
     """
     Score a single job on a 0-100 scale.
 
+    Returns 0 immediately if the job is hard-blocked (foreign location
+    or senior-level title).
+
     Args:
         job: A JobRecord to evaluate.
 
     Returns:
         A float score in [0, 100].
     """
+    # Hard block: foreign locations and senior titles get score=0
+    if _is_blocked(job):
+        return 0.0
+
     s_skill = _score_skills(job)
     s_entry = _score_entry_level(job)
     s_semantic = _score_semantic(job)
