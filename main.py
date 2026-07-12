@@ -52,7 +52,7 @@ from storage.storage import (
 )
 from matching.scorer import score_job, rank_jobs
 from matching.urgency import is_urgent
-from notifier.telegram_bot import send_urgent_alert, send_digest
+from notifier.telegram_bot import send_digest, send_no_new_matches_status, send_urgent_alert
 
 # ── Logging ──
 logging.basicConfig(
@@ -129,6 +129,11 @@ def process_digest() -> None:
     jobs = get_unalerted_jobs()
     if not jobs:
         logger.info("No unalerted jobs in DB. Nothing to process.")
+        if not send_no_new_matches_status(
+            total_jobs=stats_before["total"],
+            alerted_jobs=stats_before["alerted"],
+        ):
+            logger.error("Could not send no-new-matches Telegram status.")
         return
 
     logger.info("Scoring %d unalerted jobs…", len(jobs))

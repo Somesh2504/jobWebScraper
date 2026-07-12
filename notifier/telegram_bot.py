@@ -79,7 +79,15 @@ def _send_message(text: str, parse_mode: str = "MarkdownV2") -> bool:
 
     try:
         resp = requests.post(url, json=payload, timeout=15)
-        data = resp.json()
+        try:
+            data = resp.json()
+        except ValueError:
+            logger.error(
+                "Telegram returned a non-JSON response (HTTP %s): %s",
+                resp.status_code,
+                resp.text[:500],
+            )
+            return False
         if data.get("ok"):
             logger.info("Telegram message sent (chat_id=%s).", chat_id)
             return True
@@ -96,6 +104,16 @@ def _send_message(text: str, parse_mode: str = "MarkdownV2") -> bool:
 
 
 # ──────────────────────────────────────────────
+def send_no_new_matches_status(total_jobs: int, alerted_jobs: int) -> bool:
+    """Report an empty digest run so scheduled delivery is observable."""
+    message = (
+        "INFO: *Job Search Scan Complete*\n"
+        "No jobs are awaiting notification in this run\\.\n"
+        f"Tracked jobs: {_esc(total_jobs)} \\| Already notified: {_esc(alerted_jobs)}"
+    )
+    logger.info("Sending no-new-matches status (total=%d, alerted=%d).", total_jobs, alerted_jobs)
+    return _send_message(message)
+
 # Score helpers
 # ──────────────────────────────────────────────
 def _score_bar(score: float, width: int = 10) -> str:
